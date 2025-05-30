@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -5,21 +6,27 @@ from torchvision.datasets import CelebA, MNIST
 
 
 def get_dataloader(dataset: str, batch_size: 16) -> DataLoader:
-    transform = transforms.Compose(
+    transform1 = transforms.Compose(
         [
             transforms.CenterCrop(168),
             transforms.Resize((64, 64)),
             transforms.ToTensor(),
         ]
     )
+
+    transform2 = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,)),
+        ]
+    )
     if dataset == 'celeba':
-        dataset = CelebA(root=f'dataset/', download=False, transform=transform)
+        dataset = CelebA(root=f'dataset/', download=False, transform=transform1)
     elif dataset == 'mnist':
-        dataset = MNIST(root=f'dataset/{dataset}/', download=False, transform=transforms.ToTensor())
+        dataset = MNIST(root=f'dataset/{dataset}/', download=True, transform=transform2)
     elif 'single_mnist' in dataset:
         cls = int(dataset.split('-')[1])
-        print(cls)
-        dataset = MNIST(root=f'dataset/mnist/', download=False, transform=transforms.ToTensor())
+        dataset = MNIST(root=f'dataset/mnist/', download=True, transform=transform2)
 
         targets = dataset.targets.clone()
         mask = targets == cls
@@ -29,20 +36,16 @@ def get_dataloader(dataset: str, batch_size: 16) -> DataLoader:
     else:
         raise ValueError(f'Unknown dataset: {dataset}')
 
-    return DataLoader(dataset, batch_size, shuffle=True, pin_memory=True)
+    return DataLoader(dataset, batch_size, shuffle=True, pin_memory=True, drop_last=True)
 
 
 if __name__ == "__main__":
-    mnist_loader = get_dataloader('single_mnist-4', batch_size=16)
+    mnist_loader = get_dataloader('single_mnist-4', batch_size=1)
     img = next(iter(mnist_loader))[0]
+    img = img.squeeze()
 
     print(img.shape)
-    N, C, H, W = img.shape
-    assert N == 16
-    img = torch.permute(img, (1, 0, 2, 3))
-    img = torch.reshape(img, (C, 4, 4 * H, W))
-    img = torch.permute(img, (0, 2, 1, 3))
-    img = torch.reshape(img, (C, 4 * H, 4 * W))
-    img = transforms.ToPILImage()(img)
-    img.show()
+    print(img.min(), img.max())
+    plt.imshow(img)
+    plt.show()
     # img.save("tmp.jpg")
