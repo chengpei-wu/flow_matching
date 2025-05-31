@@ -17,57 +17,6 @@ class FourierTimeEmbedding(nn.Module):
         return torch.cat([torch.sin(t_proj), torch.cos(t_proj)], dim=-1)
 
 
-class FlowMatchingMLP(nn.Module):
-    def __init__(self, input_dim, time_embed_dim=64):
-        super().__init__()
-        self.time_embed = FourierTimeEmbedding(time_embed_dim)
-
-        self.input_dim = input_dim
-        self.latent_dim = input_dim + time_embed_dim  # full input = x_t + t_embed
-
-        def block(in_feat, out_feat, normalize=True):
-            layers = [nn.Linear(in_feat, out_feat)]
-            if normalize:
-                layers.append(nn.BatchNorm1d(out_feat, momentum=0.8))
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
-            return layers
-
-        self.model = nn.Sequential(
-            *block(self.latent_dim, 128, normalize=False),
-            *block(128, 256),
-            *block(256, 512),
-            *block(512, 1024),
-            nn.Linear(1024, input_dim),
-        )
-
-    def forward(self, x_t, t):
-        t_embed = self.time_embed(t)  # shape: (B, time_embed_dim)
-        xt = torch.cat([x_t, t_embed], dim=-1)  # concat (B, input_dim + time_embed_dim)
-        return self.model(xt)
-
-# class FlowMatchingMLP(nn.Module):
-#     def __init__(self, input_dim, hidden_dim=256, time_embed_dim=64, depth=4):
-#         super().__init__()
-#         self.time_embed = FourierTimeEmbedding(time_embed_dim)
-#
-#         self.input_layer = nn.Linear(input_dim + time_embed_dim, hidden_dim)
-#
-#         layers = []
-#         for _ in range(depth - 2):
-#             layers.append(nn.Linear(hidden_dim, hidden_dim))
-#             layers.append(nn.ReLU())
-#         self.hidden_layers = nn.Sequential(*layers)
-#
-#         self.output_layer = nn.Linear(hidden_dim, input_dim)
-#
-#     def forward(self, x_t, t):
-#         t_embed = self.time_embed(t)
-#         xt = torch.cat([x_t, t_embed], dim=-1)
-#         h = self.input_layer(xt)
-#         h = self.hidden_layers(h)
-#
-#         return self.output_layer(h)
-
 class DownLayer(nn.Module):
     def __init__(self, in_channels, out_channels, time_emb_dim=16, downsample=False):
         super(DownLayer, self).__init__()
@@ -93,6 +42,7 @@ class DownLayer(nn.Module):
             x = self.pool(x)
         return x
 
+
 class UpLayer(nn.Module):
     def __init__(self, in_channels, out_channels, time_emb_dim=16, upsample=False):
         super(UpLayer, self).__init__()
@@ -116,6 +66,7 @@ class UpLayer(nn.Module):
         x = x + res
         return x
 
+
 class MiddleLayer(nn.Module):
     def __init__(self, in_channels, out_channels, time_emb_dim=16):
         super(MiddleLayer, self).__init__()
@@ -135,6 +86,7 @@ class MiddleLayer(nn.Module):
         res = self.shortcut(res) if self.shortcut is not None else res
         x = x + res
         return x
+
 
 class MiniUnet(nn.Module):
     def __init__(self, base_channels=16, time_emb_dim=None):
