@@ -20,6 +20,7 @@ def beta_t(t):
 
 def x_t(z, epsilon, t):
     t = t[:, None, None, None]
+    # t = t.expand(-1, img_shape[1], -1, -1)
     return alpha_t(t) * z + beta_t(t) * epsilon
 
 
@@ -68,7 +69,7 @@ def train(model, dataloader, device, args):
             pbar.update(1)
 
 
-def sample(model, num_time_steps=100):
+def sample(model, num_time_steps=50):
     model.eval()
     model = model.to('cpu')
     sinle_img_shape = (1, img_shape[1], img_shape[2], img_shape[3])
@@ -82,11 +83,11 @@ def sample(model, num_time_steps=100):
         xt = epsilon
         trajectory.append(xt.clone().detach())
         for t in ts:
-            t = t.resize(1)
+            t = t.reshape(1)
             xt = xt + h * model(xt, t)
             trajectory.append(xt.clone().detach())
     z = xt
-    z = z.reshape(sinle_img_shape).squeeze()
+    z = z.reshape(sinle_img_shape).squeeze().clamp(-1,1)
     return z.cpu(), trajectory
 
 
@@ -133,7 +134,9 @@ if __name__ == '__main__':
     img_dim = img.shape[1] * img.shape[2] * img.shape[3]  # assuming img is in shape (B, C, H, W)
 
     # init neural network model
-    model = MiniUnet()
+    model = MiniUnet(
+        num_channels=img.shape[1]
+    )
 
     if not args.sample:
         # train the model
@@ -150,8 +153,10 @@ if __name__ == '__main__':
         # sample from the model
         img, tra = sample(model)
 
-        # visualize_trajectory(tra)
-        plt.imshow(img.squeeze(), cmap='gray')
+        visualize_trajectory(tra)
+        if img.dim() == 3:
+            img = img.permute(1, 2, 0).cpu().numpy()
+        plt.imshow(img, cmap='gray')
         plt.axis('off')
         plt.title(f'Sampled Image from {args.dataset}')
         plt.show()

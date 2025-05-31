@@ -89,12 +89,12 @@ class MiddleLayer(nn.Module):
 
 
 class MiniUnet(nn.Module):
-    def __init__(self, base_channels=16, time_emb_dim=None):
+    def __init__(self, base_channels=16, time_emb_dim=None, num_channels=1):
         super(MiniUnet, self).__init__()
         self.base_channels = base_channels
         self.time_emb_dim = time_emb_dim if time_emb_dim is not None else base_channels
 
-        self.conv_in = nn.Conv2d(1, base_channels, kernel_size=3, padding=1)
+        self.conv_in = nn.Conv2d(num_channels, base_channels, kernel_size=3, padding=1)
         self.down1 = nn.ModuleList([
             DownLayer(base_channels, base_channels * 2, self.time_emb_dim),
             DownLayer(base_channels * 2, base_channels * 2, self.time_emb_dim)
@@ -119,7 +119,7 @@ class MiniUnet(nn.Module):
             UpLayer(base_channels, base_channels, self.time_emb_dim)
         ])
 
-        self.conv_out = nn.Conv2d(base_channels, 1, kernel_size=1)
+        self.conv_out = nn.Conv2d(base_channels, num_channels, kernel_size=1)
 
     def time_emb(self, t, dim):
         t = t * 1000
