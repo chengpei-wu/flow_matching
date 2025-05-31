@@ -150,4 +150,8 @@ if __name__ == '__main__':
         # sample from the model
         img, tra = sample(model)
 
-        visualize_trajectory(tra)
+        # visualize_trajectory(tra)
+        plt.imshow(img.squeeze(), cmap='gray')
+        plt.axis('off')
+        plt.title(f'Sampled Image from {args.dataset}')
+        plt.show()
