@@ -127,6 +127,7 @@ if __name__ == '__main__':
     args = parse_args()
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
 
+    print(device)
     # init dataloader
     data_loader = get_dataloader(dataset=args.dataset, batch_size=args.batch_size)
     img = next(iter(data_loader))[0]
