@@ -1,3 +1,6 @@
+[English](./readme.md) | [Chinese](./readme_zh.md)
+
+
 # Flow Matching
 
 ## 1. what is generative modeling?
