@@ -38,12 +38,14 @@ $u_t(\cdot)$ defines a **vector feild** in $\mathbb{R}^d$ space at time $t$ (for
 
 A noise data $x_0 \in R^d$, and an image data $x_1 \in R^d$ are two points in the same space. **The transformation of a noise sample $x_0$ to a data sample $x_1$ can be seen as a flow!**
 
-If we **use a neural network to approximate the vector field $u_t(\cdot)$**, for any strating point $x_0$, we can use numerical method such as **Euler Method** to simulate an ODE:
-
+If we **use a neural network $u^\theta_t(\cdot)$ to approximate the vector field $u_t(\cdot)$**, for example, to minimize the following loss:
 $$
-\psi_{t+h}(x_0) = \psi_{t}(x_0)  +h u_t(\psi_t(x_0)), \quad (t=0,h,2h,\dots,1-h)
+\mathcal{L}_{FM}(\theta) = \mathbb{E}_{x_0\sim \mathcal{N}(0,1), t \sim U[0,1]} \left[ \left\| u^\theta_t(\psi_t(x_0)) - u_t(\psi_t(x_0)) \right\|^2 \right]
 $$
-
+Then, for any starting point $x_0$, we can use numerical method such as **Euler Method** to simulate an ODE:
+$$
+\psi_{t+h}(x_0) = \psi_{t}(x_0)  +h \cdot u_t(\psi_t(x_0)), \quad (t=0,h,2h,\dots,1-h),
+$$
 and $\psi_{0}(x_0)$ we already know is a noise, thus, we can use the Euler Method to get $\psi_{1}(x_0)$ iteritively, that is the transformation of nosie into data.
 
 ### 3.3. probability path and continuity equation
@@ -104,3 +106,39 @@ As you can see, if we design such a conditional probability path $p_t(\cdot|z)$,
 And we can sample from $p_t(\cdot)$ by first sampling a data point $z$ from $p_{data}$, and then sample a point $x$ from $p_t(\cdot|z)$.
 
 #### 3.4.2 conditional vector field
+
+Now, we have a conditional probability path $p_t(\cdot|z)$, we can use it to derive a conditional vector field $u_t(\cdot|z)$ that satisfies the continuity equation.
+More easily, we can design the following conditional flow, which derives the above conditional probability path:
+$$
+\psi_t(x_0|z) = (1-t) \cdot x_0 + t \cdot z, \quad t\in[0,1],
+$$
+$$
+X_t = \psi_t(X_0|z) = [(1-t) \cdot X_0 + t \cdot z] \sim \mathcal{N}(t\cdot z, (1-t)^2 I_d), \quad X_0 \sim \mathcal{N}(0, 1).
+$$
+Then, we can derive the conditional vector field $u_t(\cdot|z)$:
+$$
+\begin{aligned}
+u_t(\psi_t(x_0|z)|z) &= \frac{d \psi_t(x_0|z)}{dt}  \\ 
+& = u_t((1-t)\cdot x_0+t\cdot z |z)\\
+& = u_t(x_t|z)\\ 
+&=  z - x_0.
+\end{aligned}
+$$
+So, $u_t(x_t|z)$ is function of $x_t$ and $t$, we can use a neural network to approximate it.
+
+#### 3.5 training the neural network
+Now, we have a conditional vector field $u_t(x_t|z)$, we can use it to train a neural network $u^\theta_t(x_t|z)$ to approximate it.
+The training objective is to minimize the following loss function:
+$$
+\begin{aligned}
+  \mathcal{L}_{CFM}(\theta) &= \mathbb{E}_{z\sim p_{data}, x_0\sim \mathcal{N}(0,1), t\sim U[0,1]} \left[ \left\| u^\theta_t(x_t|z) - u_t(x_t|z) \right\|^2 \right],\\
+   & = \mathbb{E}_{z\sim p_{data}, x_0\sim \mathcal{N}(0,1),t\sim U[0,1]} \left[ \left\| u^\theta_t(x_t|z) - (z - x_0) \right\|^2 \right].
+\end{aligned}
+$$
+Recall section 3.2, our goal is using neural network to approximate vector field $u_t(\cdot)$, through minimizing the follow loss function:
+$$
+\mathcal{L}_{FM}(\theta) = \mathbb{E}_{x_0\sim \mathcal{N}(0,1), t\sim U[0,1]} \left[ \left\| u^\theta_t(x_t) - u_t(x_t) \right\|^2 \right],
+$$
+Fortunately, for the two loss functions $\mathcal{L}_{FM}(\theta)$ and $\mathcal{L}_{CFM}(\theta)$, minimizing one is equivalent to minimizing the other!
+
+Let us prove it:
