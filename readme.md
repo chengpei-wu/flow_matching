@@ -79,37 +79,27 @@ Fortunately, we have an image dataset, we can use it to learn $u^{target}_t(\cdo
 #### 3.4.1 conditional probability path
 
 Although we can't design a probability path $p_t$, but we have an image dataset:
-
 $$
 D = \{z_1, z_2, \dots,z_n\}, \quad z_i \sim p_{data}
 $$
-
 for a give data $z$, we can define the conditional probability path $p_t(\cdot|z)$, and we know:
-
 $$
 p_t(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_t(\cdot|z)] = \int p_t(x|z) \cdot p_{data}(z) dz
 $$
-
 If we set $p_0(\cdot|z) = \mathcal{N}(0, 1)$, then
-
 $$
 p_0(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_0(\cdot|z)] = p_0(\cdot|z)=\mathcal{N}(0, 1)
 $$
-
 is also a standard Gaussian distribution.
 
 Similarly, we can set $p_1(\cdot|z) = \delta_z$ (Dirac delta distribution, sampling from $\delta_z$ always returns $z$), then
-
 $$
 p_1(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_1(\cdot|z)] = p_{data}(z)=p_{data}
 $$
-
 Such a conditional probability path $p_t(\cdot|z)$ is easy to design, for example, we can use a linear interpolation between $\mathcal{N}(0,1)$ and $\delta(z)$:
-
 $$
 p_t(x|z) = (1-t) \cdot \mathcal{N}(0, 1) + t \cdot \delta_z(x) = \mathcal{N}(t\cdot z, (1-t)^2 I_d), \quad t\in[0,1].
 $$
-
 As you can see, if we design such a conditional probability path $p_t(\cdot|z)$, the marginal probability path $p_t(\cdot)$ will satisfy the constraints we need.
 And we can sample from $p_t(\cdot)$ by first sampling a data point $z$ from $p_{data}$, and then sample a point $x$ from $p_t(\cdot|z)$.
 
