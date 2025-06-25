@@ -1,8 +1,3 @@
-<!-- 支持 MathJax 的 script 标签 -->
-<script type="text/javascript"
-  async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-
 [English](./readme.md) | [Chinese](./readme_zh.md)
 
 # Flow Matching
