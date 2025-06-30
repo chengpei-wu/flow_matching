@@ -16,17 +16,19 @@ Flow Matching learns a neural network to predict how a sample should move from n
 ### 3.1. ODE, flow, and vector field
 In order to thoroughly understand flow matching, let us start by understanding ordinary differential equations (ODEs).
 We can define a **trajectory** by a function $X: [0,1] \to ℝ^d (t \to X_t)$, which maps from time $t \in [0,1]$ to some location in $ℝ^d$. The trajectory is also a solution of the following **ODE**:
-$$
+
+```math
 \frac{d X_t}{dt} = u_t(X_t), \quad s.t. \quad X_0 =x_0,
-$$ 
+```
+
 where $X_0 =x_0$ means the starting point is $x_0$, $X_t$ tells us the position of a point at time $t$, given that it started at $x_0$. $u_t(X_t)$ is the velocity of the trajectory $X$ at time $t$. 
 
 For different starting point $x_0$, the trajectory $X_t$ will be different. We may ask that, for any starting point $x_0$, where is the position at time $t$?
 This requirs that $X_t$ is a function of time $t$ and the initial point $x_0$, we can rewrite it as $\psi_t(x_0)$, $\psi: [0,1]\times \mathbb{R}^d \to \mathbb{R}^d$, this function is also called **flow**, which is the solution of the following **flow ODE**:
 
-$$
+```math
 \frac{d \psi_t(x_0)}{dt} = u_t(\psi_t(x_0)),\quad \psi_0(x_0) = x_0.
-$$
+```
 
 $u_t(\cdot)$ defines a **vector feild** in $\mathbb{R}^d$ at time $t$ (at time $t$, for any point $\psi_t(x_0)\in \mathbb{R}^d$, $u_t(\psi_t(x_0))$ gives a velocity vector to tell the move direction).  
 In other word, **vector fields defines ODEs whose solutions are flows!**
@@ -37,9 +39,9 @@ In other word, **vector fields defines ODEs whose solutions are flows!**
 
 If we **approximate the vector field $u_t(\cdot)$ with a neural network**, for any strating point $x_0$, as $u_t(\cdot)$ tells us which direction we should move in, we can use numerical method such as **Euler Method** to simulate the ODE:
 
-$$
+```math
 \psi_{t+h}(x_0) = \psi_{t}(x_0)  +h \cdot u_t(\psi_t(x_0)), \quad (t=0,h,2h,\dots,1-h)
-$$
+```
 
 $\psi_{0}(x_0)$ we already know is a noise, we can use the Euler Method to get $\psi_{1}(x_0)$ iteritively, that is the transformation of nosie into data.
 
@@ -53,9 +55,9 @@ Now, let us consider a more complex scenario of flow: the starting points are sa
 
 The probability density and the vector field satisfie the following key property (**Continuity Equation**):
 
-$$
+```math
 \frac{\partial p_t(x)}{\partial t} =- \nabla \cdot (p_t(x)\cdot u_t(x))
-$$
+```
 
 To provide an intuitive understanding of this equation, note that the left-hand side represents the instantaneous rate of change of the probability density at point $x$ over time. On the right-hand side, $p_t(x)$ denotes the probability density at position $x$, while $u_t(x)$ represents the velocity field--i.e., the speed and direction at which mass (or probability) moves at $x$. The product $p_t(x)\cdot u_t(x)$ describes the probability flux: it tells how much probability mass is flowing through space per unit time. Taking the divergence $\nabla \cdot (p_t(x) \cdot u_t(x))$ measures the net outflow of this flux from point $x$, and the negative sign indicates that when more mass flows out of $x$ than into it, the local density decreases accordingly.
 
