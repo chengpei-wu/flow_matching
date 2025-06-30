@@ -51,7 +51,7 @@ In other words, if we know the direction in which each pixel should move at ever
 
 Don't forget our goal is transform samples from a known distribution (e.g., standard Gaussian) into samples from an unknown data distribution (e.g., CIFAR-10).
 
-Now, let us consider a more complex scenario of flow: the starting points are sampled from a fixed distribution (e.g., $x_0 \sim \mathcal{N}(0,1)$), we konw every points will move (under the guidance of vetor field $u_t(\cdot)$) in the space, so the probability density of each point in the space will also change, thus, the data point distribution at each time $t$ is $p_t$ (i.e., $\psi_t(x_0) \sim p_t$), we call it **probability path**.
+Now, let us consider a more complex scenario of flow: the starting points are sampled from a fixed distribution, e.g., $x_0 \sim \mathcal{N}(0,1)$, we konw every points will move in the space under the guidance of vetor field $u_t(\cdot)$, so the probability density of each point in the space will also change, thus, the data point distribution at each time $t$ is $p_t$ (i.e., $\psi_t(x_0) \sim p_t$), we call it **probability path**.
 
 The probability density and the vector field satisfie the following key property (**Continuity Equation**):
 
@@ -65,7 +65,7 @@ To provide an intuitive understanding of this equation, note that the left-hand 
 
 ### 3.4. approximation of vector field
 
-Now let us consider to transform a sample from standard Gaussian distribution ($p_0 = \mathcal{N}(0,1)$) into a sample from data distribution ($p_1=p_{data}$), i.e., the probability path $p_t$ should satisfy: $p_0=p_{Gaussian}$, and $p_1=p_{data}$.
+Now let us consider to transform a sample from standard Gaussian distribution $p_0 = \mathcal{N}(0,1)$ into a sample from data distribution $p_1=p_{data}$, i.e., the probability path $p_t$ should satisfy: $p_0=p_{Gaussian}$, and $p_1=p_{data}$.
 If we can design a probability path $p_t$ with in a flow that satisfy the above two constraints (step 1), then we use a neural network to approximate the vector field $u_t(\cdot)$ (step 2), we will know how to generate data from noise!
 
 - For step 1, unfortunately, we don't know the analytic form of $p_{data}$, therefore we can't create a parobability path $p_t$ directly (if we know, we can sample data directly).
