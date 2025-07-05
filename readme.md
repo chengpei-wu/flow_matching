@@ -15,7 +15,7 @@ Flow Matching learns a neural network to predict how a sample should move from n
 
 ### 3.1. ODE, flow, and vector field
 In order to thoroughly understand flow matching, let us start by understanding ordinary differential equations (ODEs).
-We can define a **trajectory** by a function $X: [0,1] \to ℝ^d (t \to X_t)$, which maps from time $t \in [0,1]$ to some location in $ℝ^d$. The trajectory is also a solution of the following **ODE**:
+We can define a **trajectory** by a function $X: [0,1] \to \mathbb{R}^d (t \to X_t)$, which maps from time $t \in [0,1]$ to some location in $\mathbb{R}^d$. The trajectory is also a solution of the following **ODE**:
 
 ```math
 \frac{d X_t}{dt} = u_t(X_t), \quad s.t. \quad X_0 =x_0,
