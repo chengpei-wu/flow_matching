@@ -45,9 +45,9 @@ If we **approximate the vector field $u_t(\cdot)$ with a neural network**, for a
 
 $\psi_{0}(x_0)$ we already know is a noise, we can use the Euler Method to get $\psi_{1}(x_0)$ iteritively, that is the transformation of nosie into data.
 
-In other words, if we know the direction in which each pixel should move at every moment during the continuous transformation from noise to data, we can transform any new noise sample into data. This is because we have learned the underlying 'rule' of the transformation — the velocity vector field.
+In other words, if we know the direction in which each pixel should move at every moment during the continuous transformation from noise to data, we can transform any new noise sample into data sample. This is because we have learned the underlying 'rule' of the transformation — the velocity vector field.
 
-### 3.3. probability path and continuity
+### 3.3. probability path and continuity equation
 
 Don't forget our goal is transform samples from a known distribution (e.g., standard Gaussian) into samples from an unknown data distribution (e.g., CIFAR-10).
 
@@ -63,12 +63,12 @@ To provide an intuitive understanding of this equation, note that the left-hand 
 
 **That is to say, if we know $u_t$ and $p_0$, we can directly derive $p_t$; and if we just know $p_t$, we can solve the continuity equation to obtain a valid $u_t$ (the solution is not unique).**
 
-### 3.4. approximation of vector field
+### 3.4. conditional probability path & conditional vector field
 
-Now let us consider to transform a sample from standard Gaussian distribution $p_0 = \mathcal{N}(0,1)$ into a sample from data distribution $p_1=p_{data}$, i.e., the probability path $p_t$ should satisfy: $p_0=p_{Gaussian}$, and $p_1=p_{data}$.
+Now, let us consider to transform a sample from standard Gaussian distribution $p_0 = \mathcal{N}(0,1)$ into a sample from data distribution $p_1=p_{data}$, i.e., the probability path $p_t$ should satisfy: $p_0=p_{Gaussian}$, and $p_1=p_{data}$.
 If we can design a probability path $p_t$ with in a flow that satisfy the above two constraints (step 1), then we use a neural network to approximate the vector field $u_t(\cdot)$ (step 2), we will know how to generate data from noise!
 
-- For step 1, unfortunately, we don't know the analytic form of $p_{data}$, therefore we can't create a parobability path $p_t$ directly (if we know, we can sample data directly).
+- For step 1, unfortunately, we don't know the analytic form of $p_{data}$, therefore we can't create a parobability path $p_t$ directly (if we know, we can sample data from $p_{data}$ directly).
 - For step 2, unfortunately, there is no analytic ground truth $u^{target}_t(\cdot)$ as supervision signal to train the neural network (if we know, why train a neural network to approximate it? just use it to generate data form noise using Euler Method mentioned in Section 3.2).
 
 Fortunately, we have an image dataset, we can use it to learn $u^{target}_t(\cdot)$ implicitly.
@@ -78,19 +78,19 @@ Fortunately, we have an image dataset, we can use it to learn $u^{target}_t(\cdo
 Although we can't design a probability path $p_t$, but we have an image dataset:
 
 ```math
-\mathcal{D} = \{z_1, z_2, \dots,z_n\}, \quad z_i \sim p_{data}
+\mathcal{D} = \{z_1, z_2, \dots,z_n\}, \quad \forall i, z_i \sim p_{data}
 ```
 
 for a give data $z$, we can define the conditional probability path $p_t(\cdot|z)$, and we know:
 
 ```math
-p_t(\cdot) = \mathcal{E}_{z\sim p_{data}}[p_t(\cdot|z)] = \int p_t(x|z) \cdot p_{data}(z) dz
+p_t(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_t(\cdot|z)] = \int p_t(x|z) \cdot p_{data}(z) dz
 ```
 
 If we set $p_0(\cdot|z) = \mathcal{N}(0, 1)$, then
 
 ```math
-p_0(\cdot) = \mathcal{E}_{z\sim p_{data}}[p_0(\cdot|z)] = p_0(\cdot|z)=\mathcal{N}(0, 1)
+p_0(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_0(\cdot|z)] = p_0(\cdot|z)=\mathcal{N}(0, 1)
 ```
 
 is also a standard Gaussian distribution.
@@ -98,7 +98,7 @@ is also a standard Gaussian distribution.
 Similarly, we can set $p_1(\cdot|z) = \delta_z$ (Dirac delta distribution, sampling from $\delta_z$ always returns $z$), then
 
 ```math
-p_1(\cdot) = \mathcal{E}_{z\sim p_{data}}[p_1(\cdot|z)] = p_{data}(z)=p_{data}
+p_1(\cdot) = \mathbb{E}_{z\sim p_{data}}[p_1(\cdot|z)] = p_{data}(z)=p_{data}
 ```
 
 Such a conditional probability path $p_t(\cdot|z)$ is easy to design, for example, we can use a linear interpolation between $\mathcal{N}(0,1)$ and $\delta(z)$:
@@ -109,5 +109,56 @@ p_t(x|z) = (1-t) \cdot \mathcal{N}(0, 1) + t \cdot \delta_z(x) = \mathcal{N}(t\c
 
 As you can see, if we design such a conditional probability path $p_t(\cdot|z)$, the marginal probability path $p_t(\cdot)$ will satisfy the constraints we need.
 And we can sample from $p_t(\cdot)$ by first sampling a data point $z$ from $p_{data}$, and then sample a point $x$ from $p_t(\cdot|z)$.
+We have designed an conditional probability path $p_t(\cdot|z)$, which induces a valid probability path $p_t(\cdot)$ we need. However, we can't access the analytic form of $p_t(\cdot)$ as **the integral is intractable**.
 
 #### 3.4.2 conditional vector field
+
+Now, let us construct a valid conditional vector field for the designed conditional probability path.
+The corresponding conditional vector field can, in principle, be obtained by solving the continuity equation.
+However, in this example, we can easily observe that our conditional probability path can be induced by the following simple **conditional flow** directly (the valid conditional flow is not unique):
+```math
+\psi_t(x_0|z) = (1-t) \cdot x_0 + t\cdot z.
+```
+if $X_0 \sim \mathcal{N}(0,1)$, then $X_t \sim \mathcal{N}(t\cdot z, (1-t)^2 I_d)=p_t(\cdot|z)$.
+
+Therefore, by definition, we can extract the target conditional vector field:
+```math
+\frac{d}{d t} \psi_t(x_0|z) = u_t(\psi_t(x_0|z)|z), \forall x, z \in \mathbb{R}^d
+```
+let $x_t = \psi_t(x_0|z) = (1-t) \cdot x_0 + t\cdot z$, we have:
+```math
+\begin{aligned}
+\frac{d}{d t} \psi_t(x_0|z) = u_t(x_t|z) &= \frac{d}{d t} \left ((1-t) \cdot x_0 + t\cdot z \right )  \\
+& = z - x_0.
+\end{aligned}
+```
+That is to say: 
+```math
+\begin{aligned}
+u_t(x_t|z) &= z-x_0, \quad s.t. \quad x_t = (1-t) \cdot x_0 + t \cdot z
+\end{aligned}
+```
+is a valid conditional vector field, it defines an ODE which solution is the conditional flow: $\psi_t(x_0|z) = (1-t) \cdot x_0 + t\cdot z$, and the flow induced a conditional probability path: $p_t(\cdot|z) = \mathcal{N}(t\cdot z, (1-t)^2 I_d)$.
+
+### 3.5 approximation of vector field
+
+As described in section 3.2, we want to train a neural network $u^{\theta}_t(x_t)$ to approximate the vector field $u^{target}_t(x_t)$, we can achieve this by optimizing the following loss function:
+```math
+\begin{aligned}
+\mathcal{L}_{FM} (\theta) &= \mathbb{E}_{t\sim U[0,1], x_t \sim p_t} \left \| u^{\theta}_t(x_t) - u^{target}_t(x_t) \right \|^2 \\
+&= \mathbb{E}_{t\sim U[0,1], z \sim p_{data}, x_t \sim p_t(\cdot|z=z)} \left \| u^{\theta}_t(x_t) - u^{target}_t(x_t) \right \|^2.
+\end{aligned}
+```
+
+Unfortunately, As discussed earlier, the ground truth $u^{target}_t(x_t)$ is unknown, we only have an conditional ground truth vector field: $u_t(x_t|z) = z-x_0 \quad (s.t. \quad x_t = (1-t) \cdot x_0 + t \cdot z)$, a natural question is: what will happen if we optimize the following loss function:
+```math
+\begin{aligned}
+\mathcal{L}_{CFM} (\theta) &= \mathbb{E}_{t\sim U[0,1], z \sim p_{data}, x_t \sim p_t(\cdot|z=z)} \left \| u^{\theta}_t(x_t) - u^{target}_t(x_t|z) \right \|^2 \\
+&= \mathbb{E}_{t\sim U[0,1], z \sim p_{data}, x_t \sim p_t(\cdot|z=z)} \left \| u^{\theta}_t(x_t) - (z - x_0) \right \|^2.
+\end{aligned}
+```
+
+The answer is that optimizing $\mathcal{L}_{FM}(\theta)$ is equivalent to optimizing $\mathcal{L}_{CFM}(\theta)$.
+
+Let us give a formal proof of the above result:
+...
